@@ -1,0 +1,110 @@
+/* General body styles */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Main container using flexbox to split the page */
+.profile-edit-container {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-color: #f5f5f5; /* Light background for profile page */
+  justify-content: center;
+  align-items: center;
+}
+
+/* Profile form container */
+.profile-edit-form {
+  background-color: white;
+  padding: 50px;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  width: 400px; /* Slightly wider than register form */
+  position: relative;
+}
+
+/* Form header */
+.form-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.profile-icon {
+  color: #ff7e5f;
+  width: 40px;
+  height: 40px;
+  margin-bottom: 10px;
+}
+
+.form-header h2 {
+  color: #333;
+  font-size: 1.8rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* Input field group styling */
+.input-group-edit {
+  margin-bottom: 20px;
+}
+
+.input-group-edit input,
+.input-group-edit select {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.input-group-edit input::placeholder {
+  color: #a0a0a0;
+}
+
+.input-group-edit input:focus,
+.input-group-edit select:focus {
+  outline: none;
+  border-color: #ff7e5f;
+}
+
+/* Save button styling */
+.save-button {
+  width: 130px;
+  float: right;
+  padding: 12px;
+  border: none;
+  border-radius: 5px;
+  color: white;
+  font-weight: bold;
+  font-size: 1rem;
+  background: linear-gradient(to right, #ff7e5f, #feb47b);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px; /* Space between icon and text */
+  margin-top: 20px;
+}
+
+.save-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Optional: Footer or info text */
+.profile-edit-footer {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #666;
+}

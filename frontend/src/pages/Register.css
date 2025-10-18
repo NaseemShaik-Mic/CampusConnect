@@ -1,0 +1,154 @@
+/* General body styles for a clean slate */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Main container using flexbox to split the page */
+.register-container {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Left panel styling */
+.left-panel-register {
+  flex: 1;
+  background: linear-gradient(to right, #ff7e5f, #feb47b); /* Orange gradient */
+  color: white;
+  display: flex;
+  flex-direction: column; /* Stack items vertically */
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  text-align: center;
+}
+
+.arrow-down {
+  width: 0;
+  height: 0;
+  border-left: 20px solid transparent;
+  border-right: 20px solid transparent;
+  border-top: 20px solid white; /* White arrow pointing down */
+  margin-bottom: 20px;
+}
+
+.join-us-content h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.join-us-content p {
+  font-size: 1rem;
+  line-height: 1.5;
+  margin-bottom: 30px;
+  max-width: 300px; /* Limit width for better readability */
+}
+
+.about-us-button {
+  padding: 12px 30px;
+  border: 1px solid white; /* White border */
+  border-radius: 5px;
+  background-color: transparent; /* Transparent background */
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.about-us-button:hover {
+  background-color: white;
+  color: #ff7e5f; /* Change text color on hover */
+}
+
+/* Right panel styling */
+.right-panel-register {
+  flex: 1;
+  background-color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.register-form {
+  background-color: white;
+  padding: 50px;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  width: 380px; /* Slightly wider form */
+  position: relative;
+  /* Applying the rounded-corner background effect */
+  background: white;
+  clip-path: ellipse(120% 100% at 50% 50%); /* Creates the rounded shape */
+}
+
+/* Specific adjustments for the rounded shape */
+.register-form::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: white;
+    z-index: -1;
+    clip-path: ellipse(120% 100% at 50% 50%); /* Same clip path for consistency */
+}
+
+
+.register-form h2 {
+  color: #333;
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+/* Input field group styling */
+.input-group-register {
+  margin-bottom: 20px;
+}
+
+.input-group-register input {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 1rem;
+  box-sizing: border-box; /* Important for consistent sizing */
+}
+
+.input-group-register input::placeholder {
+  color: #a0a0a0;
+}
+
+.input-group-register input:focus {
+  outline: none;
+  border-color: #ff7e5f; /* Highlight on focus */
+}
+
+/* Register button styling */
+.register-button {
+  width: 100px; /* Specific width as in the image */
+  float: right; /* Aligns to the right */
+  padding: 12px;
+  border: none;
+  border-radius: 5px;
+  color: white;
+  font-weight: bold;
+  font-size: 1rem;
+  background: linear-gradient(to right, #ff7e5f, #feb47b); /* Button gradient */
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  margin-top: 20px; /* Space from the last input */
+}
+
+.register-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}

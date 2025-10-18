@@ -1,0 +1,170 @@
+/* General body styles for a clean slate */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Main container using flexbox to split the page */
+.login-container {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden; /* Hide overflow to keep shapes contained */
+}
+
+/* Left panel styling */
+.left-panel {
+  flex: 1;
+  background: linear-gradient(135deg, #7b4397, #dc2430); /* Main gradient */
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  position: relative; /* Needed for positioning the decorative shapes */
+}
+
+/* Animated decorative shapes on the left panel */
+.left-panel::before,
+.left-panel::after {
+    content: '';
+    position: absolute;
+    height: 12px;
+    width: 200px;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.1));
+    border-radius: 10px;
+    transform: rotate(-45deg);
+}
+
+.left-panel::before {
+    bottom: 15%;
+    left: -5%;
+}
+
+.left-panel::after {
+    bottom: 25%;
+    left: 10%;
+    width: 150px;
+    background: linear-gradient(90deg, rgba(255, 201, 112, 0.5), rgba(240, 113, 113, 0.3));
+}
+
+
+.welcome-content {
+  max-width: 450px;
+  text-align: left;
+  z-index: 1; /* Ensure text is above decorative shapes */
+}
+
+.welcome-content h1 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.welcome-content p {
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+/* Right panel styling */
+.right-panel {
+  flex: 1;
+  background-color: #f8f7fc; /* Light lavender background */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.login-form {
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+}
+
+.login-form h2 {
+  color: #8a63d2;
+  font-weight: bold;
+  font-size: 1rem;
+  letter-spacing: 2px;
+  margin-bottom: 30px;
+  text-align: left;
+}
+
+/* Input field group styling */
+.input-group {
+  position: relative;
+  margin-bottom: 25px;
+}
+
+.input-icon {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #a0a0a0;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 12px 12px 12px 40px; /* Padding on the left for the icon */
+  border: none;
+  border-radius: 50px;
+  background-color: #edeafc;
+  color: #333;
+  box-sizing: border-box; /* Important for consistent sizing */
+}
+
+.input-group input:focus {
+  outline: 2px solid #b39ddb; /* Highlight on focus */
+}
+
+/* Options row (Remember Me, Forgot Password) */
+.options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  font-size: 0.9rem;
+}
+
+.remember-me {
+  display: flex;
+  align-items: center;
+  color: #666;
+  cursor: pointer;
+}
+
+.remember-me input {
+  margin-right: 8px;
+}
+
+.forgot-password {
+  color: #8a63d2;
+  text-decoration: none;
+}
+
+.forgot-password:hover {
+  text-decoration: underline;
+}
+
+/* Login button styling */
+.login-button {
+  padding: 10px;
+  align-self: center;
+  border: none;
+  border-radius: 50px;
+  color: white;
+  font-weight: bold;
+  font-size: 1rem;
+  background: linear-gradient(90deg, #d53369, #daae51); /* Button gradient */
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.login-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
