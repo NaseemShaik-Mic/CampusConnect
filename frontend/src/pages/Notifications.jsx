@@ -120,33 +120,33 @@ const Notifications = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
+        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-blue-100 text-sm">Total Notifications</p>
-              <p className="text-3xl font-bold mt-2">{notifications.length}</p>
+              <p className="text-gray-500 text-sm">Total Notifications</p>
+              <p className="text-3xl font-bold mt-2 text-gray-900">{notifications.length}</p>
             </div>
-            <Bell className="w-12 h-12 text-blue-200" />
+            <Bell className="w-12 h-12 text-blue-500" />
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl p-6 text-white shadow-lg">
+        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-yellow-100 text-sm">Unread</p>
-              <p className="text-3xl font-bold mt-2">{unreadCount}</p>
+              <p className="text-gray-500 text-sm">Unread</p>
+              <p className="text-3xl font-bold mt-2 text-gray-900">{unreadCount}</p>
             </div>
-            <Eye className="w-12 h-12 text-yellow-200" />
+            <Eye className="w-12 h-12 text-yellow-500" />
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg">
+        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-green-100 text-sm">Read</p>
-              <p className="text-3xl font-bold mt-2">{notifications.length - unreadCount}</p>
+              <p className="text-gray-500 text-sm">Read</p>
+              <p className="text-3xl font-bold mt-2 text-gray-900">{notifications.length - unreadCount}</p>
             </div>
-            <CheckCircle className="w-12 h-12 text-green-200" />
+            <CheckCircle className="w-12 h-12 text-green-500" />
           </div>
         </div>
       </div>

@@ -10,14 +10,56 @@ const Login = () => {
     email: '',
     password: ''
   });
+  const [showReset, setShowReset] = useState(false);
+  const [resetForm, setResetForm] = useState({ email: '', newPassword: '', confirmPassword: '' });
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetError, setResetError] = useState('');
+  const [resetSuccess, setResetSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
+  const API_BASE_URL = 'http://localhost:5000/api';
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setError('');
+  };
+
+  const handleResetSubmit = async (e) => {
+    e.preventDefault();
+    setResetError('');
+    setResetSuccess('');
+    if (!resetForm.email || !resetForm.newPassword || !resetForm.confirmPassword) {
+      setResetError('All fields are required');
+      return;
+    }
+    if (resetForm.newPassword !== resetForm.confirmPassword) {
+      setResetError('Passwords do not match');
+      return;
+    }
+    try {
+      setResetLoading(true);
+      const res = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: resetForm.email,
+          newPassword: resetForm.newPassword,
+          confirmPassword: resetForm.confirmPassword
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Failed to reset password');
+      }
+      setResetSuccess('Password updated successfully. You can now log in.');
+      setResetForm({ email: '', newPassword: '', confirmPassword: '' });
+    } catch (err) {
+      setResetError(err.message);
+    } finally {
+      setResetLoading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -99,9 +141,9 @@ const Login = () => {
                 <input type="checkbox" defaultChecked />
                 <span>Remember</span>
               </label>
-              <a href="#" className="forgot-password">
+              <button type="button" className="forgot-password" onClick={() => { setShowReset(true); setResetError(''); setResetSuccess(''); }}>
                 Forgot password?
-              </a>
+              </button>
             </div>
 
             {/* Login Button */}
@@ -133,6 +175,65 @@ const Login = () => {
           </div> */}
         </div>
       </div>
+      {showReset && (
+        <div className="reset-overlay">
+          <div className="reset-modal">
+            <div className="reset-header">
+              <h3>Reset Password</h3>
+              <button className="reset-close" onClick={() => setShowReset(false)}>×</button>
+            </div>
+            {resetError && (
+              <div className="error-box">
+                <AlertCircle className="error-icon" />
+                <p>{resetError}</p>
+              </div>
+            )}
+            {resetSuccess && (
+              <div className="success-box">
+                <p>{resetSuccess}</p>
+              </div>
+            )}
+            <form onSubmit={handleResetSubmit} className="reset-form">
+              <div className="input-group">
+                <FaUser className="input-icon" />
+                <input
+                  type="email"
+                  name="resetEmail"
+                  placeholder="Enter your email"
+                  value={resetForm.email}
+                  onChange={(e) => setResetForm({ ...resetForm, email: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="input-group">
+                <FaLock className="input-icon" />
+                <input
+                  type="password"
+                  name="newPassword"
+                  placeholder="New password"
+                  value={resetForm.newPassword}
+                  onChange={(e) => setResetForm({ ...resetForm, newPassword: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="input-group">
+                <FaLock className="input-icon" />
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  placeholder="Confirm new password"
+                  value={resetForm.confirmPassword}
+                  onChange={(e) => setResetForm({ ...resetForm, confirmPassword: e.target.value })}
+                  required
+                />
+              </div>
+              <button type="submit" className="login-button" disabled={resetLoading}>
+                {resetLoading ? 'Updating...' : 'Update Password'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

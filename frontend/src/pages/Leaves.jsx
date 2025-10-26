@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
-import Particles from "../components/Particles"; // ✅ adjust the import path if needed
+// Removed animated background for a plain, light UI
 
 const Leaves = () => {
   const { user } = useAuth();
@@ -107,40 +107,14 @@ const Leaves = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-96 relative">
-        {/* Background */}
-        <div className="absolute inset-0 -z-10">
-          <Particles
-            particleColors={["#ffffff", "#ffffff"]}
-            particleCount={200}
-            particleSpread={10}
-            speed={0.1}
-            particleBaseSize={100}
-            moveParticlesOnHover={true}
-            alphaParticles={false}
-            disableRotation={false}
-          />
-        </div>
+      <div className="flex items-center justify-center h-96 bg-gray-50">
         <div className="h-10 w-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden">
-      {/* ✅ Particles Background */}
-      <div className="absolute inset-0 -z-10">
-        <Particles
-          particleColors={["#ffffff", "#ffffff"]}
-          particleCount={200}
-          particleSpread={10}
-          speed={0.1}
-          particleBaseSize={100}
-          moveParticlesOnHover={true}
-          alphaParticles={false}
-          disableRotation={false}
-        />
-      </div>
+    <div className="min-h-screen bg-gray-50">
 
       <motion.div
         className="space-y-8 p-6 relative z-10"
@@ -150,15 +124,15 @@ const Leaves = () => {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-white">Leave Requests</h1>
-            <p className="text-blue-500 mt-1">
+            <h1 className="text-3xl font-bold text-gray-900">Leave Requests</h1>
+            <p className="text-gray-600 mt-1">
               Track and manage your leaves easily
             </p>
           </div>
           {user.role === "student" && (
             <button
               onClick={() => setShowCreateModal(true)}
-              className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-6 py-3 rounded-xl hover:from-indigo-600 hover:to-purple-600 transition shadow-md flex items-center"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition shadow-sm flex items-center"
             >
               <Plus className="w-5 h-5 mr-2" /> Request Leave
             </button>
@@ -166,7 +140,7 @@ const Leaves = () => {
         </div>
 <br />
         {/* Stats */}
-        <div className="grid md:grid-cols-3 gap-25">
+        <div className="grid md:grid-cols-3 gap-6">
           {[
             {
               title: "Total Requests",
@@ -189,8 +163,8 @@ const Leaves = () => {
           ].map((stat, i) => (
             <motion.div
               key={i}
-              whileHover={{ scale: 1.03 }}
-              className="bg-white/70 backdrop-blur-md border border-gray-200 rounded-2xl p-6 shadow-sm flex justify-between items-center"
+              whileHover={{ scale: 1.02 }}
+              className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm flex justify-between items-center"
             >
               <div>
                 <p className="text-gray-600 text-sm">{stat.title}</p>
@@ -210,7 +184,7 @@ const Leaves = () => {
               <motion.div
                 key={leave._id}
                 whileHover={{ scale: 1.02 }}
-                className="bg-white/80 backdrop-blur-lg border border-gray-200 p-6 rounded-2xl shadow-sm hover:shadow-xl transition-all"
+                className="bg-white border border-gray-200 p-6 rounded-2xl shadow-sm hover:shadow-md transition"
               >
                 <div className="flex justify-between">
                   <div>
@@ -277,7 +251,7 @@ const Leaves = () => {
               </motion.div>
             ))
           ) : (
-            <div className="text-center py-12 bg-white/80 rounded-2xl shadow">
+            <div className="text-center py-12 bg-white rounded-2xl shadow-sm border border-gray-200">
               <FileText className="w-14 h-14 text-gray-400 mx-auto mb-3" />
               <p className="text-gray-500">No leave requests found</p>
             </div>
@@ -288,63 +262,71 @@ const Leaves = () => {
         {showCreateModal && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 z-50">
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
+              initial={{ scale: 0.96, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-lg"
+              className="bg-white rounded-3xl shadow-2xl p-10 w-full max-w-lg border border-gray-200"
             >
-              <h3 className="text-2xl font-bold text-center text-indigo-600 mb-6">
+              <h3 className="text-2xl font-bold text-center text-gray-900 mb-8">
                 Request Leave
               </h3>
-              <form onSubmit={handleCreateLeave} className="space-y-4">
-                <select
-                  value={formData.leaveType}
-                  onChange={(e) =>
-                    setFormData({ ...formData, leaveType: e.target.value })
-                  }
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-400"
-                >
-                  <option value="casual">Casual</option>
-                  <option value="sick">Sick</option>
-                  <option value="emergency">Emergency</option>
-                  <option value="other">Other</option>
-                </select>
-                <input
-                  type="date"
-                  value={formData.startDate}
-                  onChange={(e) =>
-                    setFormData({ ...formData, startDate: e.target.value })
-                  }
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-400"
-                />
-                <input
-                  type="date"
-                  value={formData.endDate}
-                  onChange={(e) =>
-                    setFormData({ ...formData, endDate: e.target.value })
-                  }
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-400"
-                />
-                <textarea
-                  value={formData.reason}
-                  onChange={(e) =>
-                    setFormData({ ...formData, reason: e.target.value })
-                  }
-                  rows="4"
-                  placeholder="Reason for leave..."
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-400"
-                ></textarea>
+              <form onSubmit={handleCreateLeave} className="space-y-5">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Leave type</label>
+                  <select
+                    value={formData.leaveType}
+                    onChange={(e) => setFormData({ ...formData, leaveType: e.target.value })}
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  >
+                    <option value="casual">Casual</option>
+                    <option value="sick">Sick</option>
+                    <option value="emergency">Emergency</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
 
-                <div className="flex gap-3 pt-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Start date</label>
+                    <input
+                      type="date"
+                      value={formData.startDate}
+                      onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                      className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">End date</label>
+                    <input
+                      type="date"
+                      value={formData.endDate}
+                      onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                      className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Reason</label>
+                  <textarea
+                    value={formData.reason}
+                    onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
+                    rows="4"
+                    placeholder="Tell us briefly why you need leave..."
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  ></textarea>
+                </div>
+
+                <div className="flex gap-3 pt-4">
                   <button
                     type="submit"
-                    className="flex-1 bg-gradient-to-r from-indigo-500 to-purple-500 text-white py-3 rounded-xl hover:from-indigo-600 hover:to-purple-600 transition"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg transition shadow-sm"
                   >
-                    Submit
+                    Submit Request
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowCreateModal(false)}
-                    className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl hover:bg-gray-200"
+                    className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200"
                   >
                     Cancel
                   </button>

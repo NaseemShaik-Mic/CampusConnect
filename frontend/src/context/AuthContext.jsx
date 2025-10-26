@@ -32,7 +32,10 @@ export const AuthProvider = ({ children }) => {
   const fetchUser = async () => {
     try {
       const response = await axios.get('/auth/me');
-      setUser(response.data.user);
+      const u = response.data.user || null;
+      // Normalize to always have an 'id' field for consumers
+      const normalized = u ? { id: u.id || u._id, ...u } : null;
+      setUser(normalized);
     } catch (error) {
       console.error('Error fetching user:', error);
       logout();

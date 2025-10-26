@@ -14,7 +14,7 @@ export const register = async (req, res) => {
         success: false,
         message: 'User already exists with this email'
       });
-    }
+    };
 
     // Create user
     const user = await User.create({
@@ -47,6 +47,35 @@ export const register = async (req, res) => {
       success: false,
       message: error.message
     });
+  }
+};
+
+// @desc    Reset password by email
+// @route   POST /api/auth/forgot-password
+// @access  Public
+export const resetPassword = async (req, res) => {
+  try {
+    const { email, newPassword, confirmPassword } = req.body;
+
+    if (!email || !newPassword || !confirmPassword) {
+      return res.status(400).json({ success: false, message: 'Email, new password and confirm password are required' });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ success: false, message: 'Passwords do not match' });
+    }
+
+    const user = await User.findOne({ email }).select('+password');
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'No user found with this email' });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    return res.status(200).json({ success: true, message: 'Password updated successfully' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 

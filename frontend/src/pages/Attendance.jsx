@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Search, ChevronLeft, ChevronRight, User, CheckCircle, XCircle, Bell } from 'lucide-react';
-import Iridescence from '../components/Iridescence';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -13,27 +12,30 @@ const Attendance = () => {
   const [stats, setStats] = useState(null);
   const [studentAttendance, setStudentAttendance] = useState([]);
   const [error, setError] = useState(null);
+  const [notice, setNotice] = useState(null);
+  const [noticeType, setNoticeType] = useState('success');
   
   const [filters, setFilters] = useState({
-    faculty: '',
-    program: '',
+    department: '',
+    semester: '',
     section: 'All',
     session: '',
-    course: ''
+    subject: ''
   });
 
   const [filterOptions, setFilterOptions] = useState({
-    faculties: [],
-    programs: [],
+    departments: [],
+    semesters: [],
     sections: ['All', 'A', 'B', 'C'],
     sessions: [],
-    courses: []
+    subjects: []
   });
 
   // Fetch current user
   useEffect(() => { fetchCurrentUser(); }, []);
   useEffect(() => { if (user) user.role === 'student' ? fetchStudentData() : fetchDynamicFilterOptions(); }, [user]);
-  useEffect(() => { if (user && user.role !== 'student' && filters.course) fetchStudentsForAttendance(); }, [filters]);
+  // When filters change, refetch students (only applies filters that are chosen)
+  useEffect(() => { if (user && user.role !== 'student') fetchStudentsForAttendance(); }, [filters]);
 
   const fetchCurrentUser = async () => {
     try {
@@ -49,35 +51,30 @@ const Attendance = () => {
 
   const fetchDynamicFilterOptions = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const usersResponse = await fetch(`${API_BASE_URL}/users`, { headers: { 'Authorization': `Bearer ${token}` } });
-      if (!usersResponse.ok) throw new Error('Failed to fetch users');
-      const usersData = await usersResponse.json();
-      const allUsers = usersData.users || usersData.data || [];
-
-      const faculties = [...new Set(allUsers.filter(u => u.department).map(u => u.department))].filter(Boolean);
-      const programs = [...new Set(allUsers.filter(u => u.department).map(u => u.department))].filter(Boolean);
-      const semesters = [...new Set(allUsers.filter(u => u.semester).map(u => `Semester ${u.semester}`))].filter(Boolean).sort();
-      const courses = ['Mathematics', 'Physics', 'Chemistry', 'Computer Science', 'English'];
+      const departments = ['Computer Science', 'Electronics', 'Mechanical'];
+      const semesters = ['1', '2', '3', '4', '5', '6', '7', '8'];
+      const sessions = ['morning', 'afternoon'];
+      const subjects = ['Mathematics', 'Physics', 'Chemistry', 'Computer Science', 'English'];
 
       setFilterOptions({
-        faculties: faculties.length > 0 ? faculties : ['Computer Science', 'Electronics', 'Mechanical'],
-        programs: programs.length > 0 ? programs : ['Computer Science', 'Electronics', 'Mechanical'],
+        departments,
+        semesters,
         sections: ['All', 'A', 'B', 'C'],
-        sessions: semesters.length > 0 ? semesters : ['2024-2025', '2025-2026'],
-        courses
+        sessions,
+        subjects
       });
 
-      if (faculties.length > 0) setFilters(prev => ({ ...prev, faculty: faculties[0], program: programs[0] || '', session: semesters[0] || '', course: courses[0] || '' }));
+      // Default to no filters for faculty/admin so all students show initially
+      setFilters(prev => ({
+        ...prev,
+        department: '',
+        semester: '',
+        section: 'All',
+        session: '',
+        subject: ''
+      }));
     } catch (err) {
       console.error(err);
-      setFilterOptions({
-        faculties: ['Computer Science', 'Electronics', 'Mechanical'],
-        programs: ['Computer Science', 'Electronics', 'Mechanical'],
-        sections: ['All', 'A', 'B', 'C'],
-        sessions: ['2024-2025', '2025-2026'],
-        courses: ['Mathematics', 'Physics', 'Chemistry', 'Computer Science', 'English']
-      });
     }
   };
 
@@ -103,30 +100,32 @@ const Attendance = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const queryParams = new URLSearchParams(filters);
-      const response = await fetch(`${API_BASE_URL}/students?${queryParams}`, { headers: { 'Authorization': `Bearer ${token}` } });
+      let url = `${API_BASE_URL}/attendance/students`;
+      const params = new URLSearchParams();
+      if (filters.department) params.append('department', filters.department);
+      if (filters.semester) params.append('semester', filters.semester);
+      if (filters.section && filters.section !== 'All') params.append('section', filters.section);
+      if (filters.session) params.append('session', filters.session);
+      if (filters.subject) params.append('subject', filters.subject);
+      const qs = params.toString();
+      if (qs) url += `?${qs}`;
+      const response = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
       if (!response.ok) throw new Error('Failed to fetch students');
       const data = await response.json();
-      if (data.success) { setStudents(data.students || []); await fetchTodayAttendance(); }
+      if (data.success) { setStudents(data.students || []); setAttendanceMarked({}); }
       setLoading(false);
     } catch (err) { console.error(err); setError(err.message); setStudents([]); setLoading(false); }
   };
 
-  const fetchTodayAttendance = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const dateStr = currentDate.toISOString().split('T')[0];
-      const response = await fetch(`${API_BASE_URL}/attendance/date/${dateStr}?course=${filters.course}`, { headers: { 'Authorization': `Bearer ${token}` } });
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.attendance) {
-          const marked = {};
-          data.attendance.forEach(record => { marked[record.student._id || record.student] = record.status; });
-          setAttendanceMarked(marked);
-        }
-      }
-    } catch (err) { console.error(err); }
-  };
+  // Prefill not supported by backend endpoint currently
+  const fetchTodayAttendance = async () => {};
+
+  // Initially load all students for faculty/admin
+  useEffect(() => {
+    if (user && user.role !== 'student') {
+      fetchStudentsForAttendance();
+    }
+  }, [user]);
 
   const toggleAttendance = (studentId, status) => { setAttendanceMarked(prev => ({ ...prev, [studentId]: prev[studentId] === status ? null : status })); };
 
@@ -134,15 +133,22 @@ const Attendance = () => {
     try {
       const token = localStorage.getItem('token');
       const records = Object.entries(attendanceMarked).filter(([_, status]) => status !== null).map(([studentId, status]) => ({ student: studentId, status }));
-      if (!records.length) { alert('Please mark attendance for at least one student'); return; }
+      if (!records.length) { setNotice('Please mark attendance for at least one student'); setNoticeType('warning'); return; }
       const response = await fetch(`${API_BASE_URL}/attendance`, {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ date: currentDate.toISOString().split('T')[0], ...filters, records })
+        body: JSON.stringify({
+          date: currentDate.toISOString().split('T')[0],
+          subject: filters.subject,
+          department: filters.department,
+          semester: parseInt(filters.semester) || undefined,
+          session: filters.session,
+          records
+        })
       });
       const data = await response.json();
-      if (data.success) { alert('Attendance saved successfully!'); await fetchTodayAttendance(); }
-      else alert(data.message || 'Failed to save attendance');
-    } catch (err) { console.error(err); alert(`Error: ${err.message}`); }
+      if (data.success) { setNoticeType('success'); setNotice('Attendance saved successfully'); await fetchTodayAttendance(); }
+      else { setNoticeType('error'); setNotice(data.message || 'Failed to save attendance'); }
+    } catch (err) { console.error(err); setNoticeType('error'); setNotice(`Error: ${err.message}`); }
   };
 
   const getTodayStats = () => {
@@ -184,11 +190,16 @@ const Attendance = () => {
   if (!user) return null;
 
   return (
-    <div className="relative min-h-screen">
-      <div className="absolute inset-0 -z-10">
-        <Iridescence color={[1, 1, 1]} mouseReact={false} amplitude={0.1} speed={1.0} />
-      </div>
-<br />
+    <div className="min-h-screen bg-gray-50">
+      {notice && (
+        <div className={`mx-auto max-w-3xl mt-4 px-4`}>
+          <div className={`${noticeType === 'success' ? 'bg-green-50 text-green-800 border-green-200' : noticeType === 'warning' ? 'bg-yellow-50 text-yellow-800 border-yellow-200' : 'bg-red-50 text-red-800 border-red-200'} border rounded-lg px-4 py-3 flex items-start justify-between`}>
+            <div className="text-sm font-medium">{notice}</div>
+            <button onClick={() => setNotice(null)} className="text-xs opacity-70 hover:opacity-100">Dismiss</button>
+          </div>
+        </div>
+      )}
+      <br />
       {/* Student View */}
       {user.role === 'student' ? (
        <div className="min-h-screen bg-transparent p-6">
@@ -251,7 +262,7 @@ const Attendance = () => {
                     <td className="py-3 px-4">{subject.total}</td>
                     <td className="py-3 px-4 text-green-600 font-semibold">{subject.present}</td>
                     <td className="py-3 px-4 text-red-600 font-semibold">{subject.total - subject.present}</td>
-                    <td className="py-3 px-4 font-semibold">{subject.percentage.toFixed(2)}%</td>
+                    <td className="py-3 px-4 font-semibold">{Number(subject.percentage || 0).toFixed(2)}%</td>
                   </tr>
                 ))}
               </tbody>
@@ -318,7 +329,7 @@ const Attendance = () => {
         /* Faculty/Admin View */
        <div className="min-h-screen bg-transparent p-6">
   <div className="max-w-7xl mx-auto">
-    <div className="bg-white rounded-lg shadow-sm p-4 mb-6 flex items-center justify-between">
+    <div className="bg-white rounded-lg shadow-sm p-10 mb-6 flex items-center justify-between">
       <h1 className="text-2xl font-bold text-gray-800">Attendance Management</h1>
       <div className="flex items-center gap-4">
         <div className="relative">
@@ -338,31 +349,35 @@ const Attendance = () => {
       </div>
     </div>
 <br />
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-      <div className="lg:col-span-3">
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 p-10">
+      <div className="lg:col-span-3 p-10">
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <h2 className="text-xl font-bold mb-4">Mark Attendance</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm text-gray-600 mb-1">Faculty *</label>
-              <select 
-                className="w-full border border-gray-300 rounded-lg px-3 py-2" 
-                value={filters.faculty} 
-                onChange={(e) => setFilters({...filters, faculty: e.target.value})}
+              <label className="block text-sm text-gray-600 mb-1">Department *</label>
+              <select
+                className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                value={filters.department}
+                onChange={(e) => setFilters({ ...filters, department: e.target.value })}
               >
-                <option value="">Select Faculty</option>
-                {filterOptions.faculties.map(f => <option key={f} value={f}>{f}</option>)}
+                <option value="">Select Department</option>
+                {filterOptions.departments.map(d => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
               </select>
             </div>
             <div>
-              <label className="block text-sm text-gray-600 mb-1">Program *</label>
-              <select 
-                className="w-full border border-gray-300 rounded-lg px-3 py-2" 
-                value={filters.program} 
-                onChange={(e) => setFilters({...filters, program: e.target.value})}
+              <label className="block text-sm text-gray-600 mb-1">Semester *</label>
+              <select
+                className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                value={filters.semester}
+                onChange={(e) => setFilters({ ...filters, semester: e.target.value })}
               >
-                <option value="">Select Program</option>
-                {filterOptions.programs.map(p => <option key={p} value={p}>{p}</option>)}
+                <option value="">Select Semester</option>
+                {filterOptions.semesters.map(s => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
               </select>
             </div>
             <div>
@@ -387,14 +402,14 @@ const Attendance = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm text-gray-600 mb-1">Course *</label>
-              <select 
-                className="w-full border border-gray-300 rounded-lg px-3 py-2" 
-                value={filters.course} 
-                onChange={(e) => setFilters({...filters, course: e.target.value})}
+              <label className="block text-sm text-gray-600 mb-1">Subject *</label>
+              <select
+                className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                value={filters.subject}
+                onChange={(e) => setFilters({ ...filters, subject: e.target.value })}
               >
-                <option value="">Select Course</option>
-                {filterOptions.courses.map(c => <option key={c} value={c}>{c}</option>)}
+                <option value="">Select Subject</option>
+                {filterOptions.subjects.map(sub => <option key={sub} value={sub}>{sub}</option>)}
               </select>
             </div>
             <div className="flex items-end">

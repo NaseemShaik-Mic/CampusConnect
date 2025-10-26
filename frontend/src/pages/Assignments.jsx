@@ -19,7 +19,9 @@ export default function AssignmentPortal() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [showGradeModal, setShowGradeModal] = useState(false);
+  const [showSubmissionsModal, setShowSubmissionsModal] = useState(false);
   const [selectedAssignment, setSelectedAssignment] = useState(null);
+  const [submissionsForAssignment, setSubmissionsForAssignment] = useState([]);
   const [selectedSubmission, setSelectedSubmission] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadedFile, setUploadedFile] = useState(null);
@@ -28,20 +30,33 @@ export default function AssignmentPortal() {
 
   const API_URL = 'http://localhost:5000/api';
 
+  // Fetch current user from backend
   useEffect(() => {
-    initializeUser();
+    const fetchCurrentUser = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setError('No authentication token found. Please login.');
+          setLoading(false);
+          return;
+        }
+        const res = await fetch(`${API_URL}/auth/me`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('Failed to fetch user');
+        const data = await res.json();
+        if (data.success) {
+          setUser(data.user);
+          setUserRole(data.user.role);
+        } else {
+          setError(data.message || 'Failed to fetch user');
+        }
+      } catch (e) {
+        setError(e.message);
+      }
+    };
+    fetchCurrentUser();
   }, []);
-
-  const initializeUser = () => {
-    setUser({
-      id: 'user-123',
-      name: 'Alex Johnson',
-      role: 'student',
-      department: 'CSE',
-      semester: 5,
-      email: 'alex.johnson@college.edu'
-    });
-  };
 
   useEffect(() => {
     if (!user) return;
@@ -52,7 +67,10 @@ export default function AssignmentPortal() {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${API_URL}/assignments`);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/assignments`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
       
       if (!response.ok) {
         throw new Error('Failed to fetch assignments');
@@ -79,17 +97,19 @@ export default function AssignmentPortal() {
       title: formData.get('title'),
       description: formData.get('description'),
       subject: formData.get('subject'),
-      department: user.department,
-      semester: user.semester,
+      department: formData.get('department') || user?.department,
+      semester: parseInt(formData.get('semester')) || user?.semester,
       dueDate: formData.get('dueDate'),
       maxMarks: parseInt(formData.get('maxMarks')) || 100
     };
 
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(`${API_URL}/assignments`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify(newAssignment)
       });
@@ -124,8 +144,10 @@ export default function AssignmentPortal() {
     formData.append('file', uploadedFile);
 
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(`${API_URL}/assignments/${selectedAssignment._id}/submit`, {
         method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
         body: formData
       });
 
@@ -159,12 +181,14 @@ export default function AssignmentPortal() {
     setError(null);
 
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(
         `${API_URL}/assignments/${selectedAssignment._id}/grade/${selectedSubmission._id}`,
         {
           method: 'PUT',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
           },
           body: JSON.stringify({ grade: gradeValue, feedback: feedbackValue })
         }
@@ -222,61 +246,38 @@ export default function AssignmentPortal() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 flex items-center justify-center">
-        <Loader2 className="animate-spin text-blue-500" size={48} />
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader2 className="animate-spin text-blue-600" size={48} />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-white">
+    <div className="min-h-screen bg-gray-50 text-gray-900">
       {/* Header */}
-      <header className="bg-slate-900/40 backdrop-blur-xl border-b border-slate-700/50 sticky top-0 z-50">
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center font-bold text-lg shadow-lg shadow-blue-500/50">
-              📋
-            </div>
+            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-lg text-white">📋</div>
             <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                Assignment Central
-              </h1>
-              <p className="text-xs text-gray-400">Academic Portal</p>
+              <h1 className="text-2xl font-bold text-gray-900">Assignment Central</h1>
+              <p className="text-xs text-gray-500">Academic Portal</p>
             </div>
           </div>
 
           <div className="flex items-center gap-6">
             <div className="hidden md:flex gap-2">
-              <button
-                onClick={() => setUserRole('student')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-                  userRole === 'student'
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
-                    : 'bg-slate-700/50 text-gray-400 hover:bg-slate-700'
-                }`}
-              >
-                🎓 Student
-              </button>
-              <button
-                onClick={() => setUserRole('faculty')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-                  userRole === 'faculty'
-                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/30'
-                    : 'bg-slate-700/50 text-gray-400 hover:bg-slate-700'
-                }`}
-              >
-                👨‍🏫 Faculty
-              </button>
+              <span className={`px-4 py-2 rounded-md text-sm font-medium bg-gray-100 text-gray-700`}>Role: {userRole}</span>
             </div>
 
-            <div className="h-6 w-px bg-slate-700 hidden md:block" />
+            <div className="h-6 w-px bg-gray-200 hidden md:block" />
 
             <div className="flex items-center gap-3">
               <div className="text-right hidden sm:block">
-                <p className="text-sm font-semibold">{user.name}</p>
-                <p className="text-xs text-gray-400">{user.department} - Sem {user.semester}</p>
+                <p className="text-sm font-semibold text-gray-900">{user.name}</p>
+                <p className="text-xs text-gray-500">{user.department} - Sem {user.semester}</p>
               </div>
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-lg flex items-center justify-center font-bold text-slate-900">
+              <div className="w-10 h-10 bg-blue-600 text-white rounded-lg flex items-center justify-center font-bold">
                 {user.name.charAt(0)}
               </div>
             </div>
@@ -287,98 +288,150 @@ export default function AssignmentPortal() {
       <main className="max-w-7xl mx-auto px-6 py-8">
         {/* Error Message */}
         {error && (
-          <div className="mb-6 p-4 bg-red-500/20 border border-red-600/50 rounded-xl text-red-300 text-sm">
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
             {error}
           </div>
         )}
 
-        {/* Dashboard Title */}
-        <div className="flex justify-between items-start mb-8">
+      {/* View Submissions Modal */}
+      {showSubmissionsModal && selectedAssignment && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-gray-200 rounded-2xl max-w-2xl w-full p-8 shadow-xl max-h-[80vh] overflow-y-auto text-gray-900">
+            <div className="flex justify-between items-center mb-6 sticky top-0 bg-white pb-4">
+              <h3 className="text-2xl font-bold">Submissions</h3>
+              <button
+                onClick={() => {
+                  setShowSubmissionsModal(false);
+                  setSubmissionsForAssignment([]);
+                }}
+                className="text-gray-500 hover:text-gray-900 transition p-1 hover:bg-gray-100 rounded-lg"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {submissionsForAssignment.length === 0 ? (
+                <p className="text-gray-400 text-center py-8">No submissions yet</p>
+              ) : (
+                submissionsForAssignment.map((submission) => (
+                  <div key={submission._id} className="bg-white border border-gray-200 rounded-lg p-4">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <p className="font-semibold text-gray-900">{submission.student?.name || submission.studentName}</p>
+                        <p className="text-xs text-gray-500">
+                          Submitted: {submission.submittedAt ? new Date(submission.submittedAt).toLocaleDateString() : '-'}
+                        </p>
+                      </div>
+                      <span
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${getStatusColor(
+                          submission.status
+                        )}`}
+                      >
+                        {getStatusIcon(submission.status)}
+                        {submission.status?.charAt(0).toUpperCase()}
+                        {submission.status?.slice(1)}
+                      </span>
+                    </div>
+
+                    {submission.status === 'graded' && (
+                      <div className="mb-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <p className="text-sm text-green-700 font-semibold">
+                          Grade: {submission.grade}
+                        </p>
+                        {submission.feedback && (
+                          <p className="text-xs text-green-700 mt-1">{submission.feedback}</p>
+                        )}
+                      </div>
+                    )}
+
+                    {submission.status === 'submitted' && (
+                      <button
+                        onClick={() => {
+                          setSelectedSubmission(submission);
+                          setShowGradeModal(true);
+                          setShowSubmissionsModal(false);
+                        }}
+                        className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold text-sm transition text-white"
+                      >
+                        Grade This Submission
+                      </button>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+        {/* Header: Title + Actions */}
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
           <div>
             <h2 className="text-4xl font-bold mb-2">
-              {userRole === 'student' ? '📚 My Assignments' : '📊 Grading Dashboard'}
+              {userRole === 'student' ? 'My Assignments' : 'Grading Dashboard'}
             </h2>
-            <p className="text-gray-400">
+            <p className="text-gray-600">
               {userRole === 'student'
                 ? 'Track and manage your academic assignments efficiently.'
                 : 'Review and grade student submissions'}
             </p>
           </div>
 
-          {userRole === 'faculty' && (
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-xl font-semibold transition shadow-lg hover:shadow-blue-500/50 transform hover:scale-105"
-            >
-              <Plus size={20} /> Create Assignment
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+            <div className="min-w-[180px]">
+              <label className="block text-xs text-gray-500 mb-1">Filter</label>
+              <select
+                value={selectedTab}
+                onChange={(e) => setSelectedTab(e.target.value)}
+                className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              >
+                {tabs.map((tab) => (
+                  <option key={tab} value={tab} className="capitalize">
+                    {tab.charAt(0).toUpperCase() + tab.slice(1)} ({tabCounts[tab]})
+                  </option>
+                ))}
+              </select>
+            </div>
+            {isFaculty && (
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold text-white transition shadow-sm"
+              >
+                Create Assignment
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Categories Sidebar + Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          {/* Categories Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-6 sticky top-24 shadow-xl">
-              <h3 className="text-sm font-semibold text-gray-300 mb-4 px-2 uppercase tracking-wide">
-                Filter
-              </h3>
-              <div className="space-y-2">
-                {tabs.map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setSelectedTab(tab)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition transform ${
-                      selectedTab === tab
-                        ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/30 scale-105'
-                        : 'bg-slate-800/50 text-gray-300 hover:bg-slate-800/80 hover:translate-x-1'
-                    }`}
-                  >
-                    <span className="flex-shrink-0">
-                      {tab === 'pending' && <Clock size={16} />}
-                      {tab === 'submitted' && <CheckCircle size={16} />}
-                      {tab === 'graded' && <CheckCircle size={16} />}
-                      {tab === 'overdue' && <AlertCircle size={16} />}
-                      {tab === 'all' && <BookOpen size={16} />}
-                    </span>
-                    <span className="capitalize flex-1 text-left">{tab}</span>
-                    <span className="text-xs bg-slate-700/50 px-2 py-1 rounded-lg font-semibold">
-                      {tabCounts[tab]}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Assignments Grid */}
-          <div className="lg:col-span-4">
+        {/* Assignments Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {loading ? (
               <div className="flex flex-col justify-center items-center py-32">
-                <Loader2 className="animate-spin text-blue-500 mb-4" size={48} />
-                <p className="text-gray-400">Loading assignments...</p>
+                <Loader2 className="animate-spin text-blue-600 mb-4" size={48} />
+                <p className="text-gray-600">Loading assignments...</p>
               </div>
             ) : filteredAssignments.length === 0 ? (
-              <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-16 text-center">
-                <BookOpen size={56} className="text-gray-500/50 mx-auto mb-4" />
-                <p className="text-gray-400 text-lg font-medium">No assignments yet</p>
+              <div className="bg-white border border-gray-200 rounded-xl p-16 text-center">
+                <BookOpen size={56} className="text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-700 text-lg font-medium">No assignments yet</p>
                 <p className="text-gray-500 text-sm mt-2">
                   New assignments will appear here
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredAssignments.map((assignment) => (
                   <div
                     key={assignment._id}
-                    className="group bg-gradient-to-br from-slate-800/40 to-slate-900/40 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-5 hover:border-blue-500/50 hover:shadow-2xl hover:shadow-blue-500/20 transition duration-300 transform hover:scale-[1.02] flex flex-col"
+                    className="group bg-white border border-gray-200 rounded-2xl p-8 min-h-[320px] hover:border-blue-300 hover:shadow-md transition flex flex-col"
                   >
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex-1">
-                        <h3 className="font-bold text-lg group-hover:text-blue-400 transition line-clamp-2">
+                        <h3 className="font-bold text-xl group-hover:text-blue-700 transition line-clamp-2">
                           {assignment.title}
                         </h3>
-                        <p className="text-gray-400 text-sm mt-1.5 font-medium">
+                        <p className="text-gray-600 text-sm mt-1.5 font-medium">
                           {assignment.subject}
                         </p>
                       </div>
@@ -393,22 +446,22 @@ export default function AssignmentPortal() {
                       </span>
                     </div>
 
-                    <p className="text-gray-400 text-sm mb-4 line-clamp-2 leading-relaxed flex-grow">
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-2 leading-relaxed flex-grow">
                       {assignment.description}
                     </p>
 
-                    <div className="flex items-center justify-between text-sm mb-6 pb-6 border-b border-slate-700/50">
-                      <div className="flex items-center gap-2 text-gray-400">
-                        <Clock size={14} className="text-blue-400" />
+                    <div className="flex items-center justify-between text-sm mb-7 pb-6 border-b border-gray-200">
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <Clock size={14} className="text-blue-600" />
                         <span>
-                          Due:{' '}
+                          Due{' '}
                           {new Date(assignment.dueDate).toLocaleDateString(
                             'en-US',
                             { month: 'short', day: 'numeric', year: 'numeric' }
                           )}
                         </span>
                       </div>
-                      <span className="text-gray-300 font-bold text-base">
+                      <span className="text-gray-900 font-bold text-base">
                         {assignment.maxMarks} pts
                       </span>
                     </div>
@@ -420,10 +473,10 @@ export default function AssignmentPortal() {
                           setShowSubmitModal(true);
                         }}
                         disabled={assignment.status === 'submitted' || assignment.status === 'graded'}
-                        className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition transform ${
+                        className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-lg font-semibold transition ${
                           assignment.status === 'submitted' || assignment.status === 'graded'
-                            ? 'bg-slate-800/50 text-gray-500 cursor-not-allowed'
-                            : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white hover:shadow-lg hover:shadow-blue-500/30 hover:scale-105 active:scale-95'
+                            ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
+                            : 'bg-blue-600 hover:bg-blue-700 text-white'
                         }`}
                       >
                         <FileUp size={18} />
@@ -435,13 +488,10 @@ export default function AssignmentPortal() {
                       </button>
                     ) : (
                       <button
-                        onClick={() => {
-                          setSelectedAssignment(assignment);
-                          setShowGradeModal(true);
-                        }}
-                        className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white transition hover:shadow-lg hover:shadow-purple-500/30 transform hover:scale-105 active:scale-95"
+                        onClick={() => openSubmissions(assignment)}
+                        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-lg font-semibold bg-purple-600 hover:bg-purple-700 text-white transition"
                       >
-                        📊 View Submissions ({assignment.submissionCount || 0})
+                        View Submissions ({assignment.submissionCount || 0})
                       </button>
                     )}
 
@@ -462,18 +512,17 @@ export default function AssignmentPortal() {
               </div>
             )}
           </div>
-        </div>
       </main>
 
       {/* Create Assignment Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-8 shadow-2xl">
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-gray-200 rounded-2xl max-w-md w-full p-8 shadow-xl text-gray-900">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-2xl font-bold">Create Assignment</h3>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="text-gray-400 hover:text-white transition p-1 hover:bg-slate-700 rounded-lg"
+                className="text-gray-500 hover:text-gray-900 transition p-1 hover:bg-gray-100 rounded-lg"
               >
                 <X size={20} />
               </button>
@@ -481,58 +530,86 @@ export default function AssignmentPortal() {
 
             <form onSubmit={handleCreateAssignment} className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Title
                 </label>
                 <input
                   type="text"
                   name="title"
                   required
-                  className="w-full px-4 py-3 bg-slate-800/50 border border-slate-600 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition text-white placeholder-gray-500"
+                  className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition text-gray-900 placeholder-gray-400"
                   placeholder="Assignment title"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Description
                 </label>
                 <textarea
                   name="description"
                   required
                   rows="3"
-                  className="w-full px-4 py-3 bg-slate-800/50 border border-slate-600 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition text-white resize-none placeholder-gray-500"
+                  className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition text-gray-900 resize-none placeholder-gray-400"
                   placeholder="Assignment description"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Subject
                 </label>
                 <input
                   type="text"
                   name="subject"
                   required
-                  className="w-full px-4 py-3 bg-slate-800/50 border border-slate-600 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition text-white placeholder-gray-500"
+                  className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition text-gray-900 placeholder-gray-400"
                   placeholder="Subject name"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Department
+                  </label>
+                  <input
+                    type="text"
+                    name="department"
+                    defaultValue={user?.department || ''}
+                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition text-gray-900 placeholder-gray-400"
+                    placeholder="e.g., Computer Science"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Semester
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    name="semester"
+                    defaultValue={user?.semester || ''}
+                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition text-gray-900 placeholder-gray-400"
+                    placeholder="e.g., 5"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Due Date
                   </label>
                   <input
                     type="date"
                     name="dueDate"
                     required
-                    className="w-full px-4 py-3 bg-slate-800/50 border border-slate-600 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition text-white"
+                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition text-gray-900"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Max Marks
                   </label>
                   <input
@@ -540,7 +617,7 @@ export default function AssignmentPortal() {
                     name="maxMarks"
                     defaultValue="100"
                     min="1"
-                    className="w-full px-4 py-3 bg-slate-800/50 border border-slate-600 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition text-white"
+                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition text-gray-900"
                   />
                 </div>
               </div>
@@ -569,8 +646,8 @@ export default function AssignmentPortal() {
 
       {/* Submit Assignment Modal */}
       {showSubmitModal && selectedAssignment && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-8 shadow-2xl">
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-gray-200 rounded-2xl max-w-md w-full p-8 shadow-xl text-gray-900">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-2xl font-bold">Submit Assignment</h3>
               <button
@@ -578,35 +655,35 @@ export default function AssignmentPortal() {
                   setShowSubmitModal(false);
                   setUploadedFile(null);
                 }}
-                className="text-gray-400 hover:text-white transition p-1 hover:bg-slate-700 rounded-lg"
+                className="text-gray-500 hover:text-gray-900 transition p-1 hover:bg-gray-100 rounded-lg"
               >
                 <X size={20} />
               </button>
             </div>
 
             <form onSubmit={handleSubmitAssignment} className="space-y-4">
-              <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
-                <p className="text-sm text-gray-300 font-semibold mb-2">
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <p className="text-sm text-gray-700 font-semibold mb-2">
                   {selectedAssignment.title}
                 </p>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-gray-500">
                   Due: {new Date(selectedAssignment.dueDate).toLocaleDateString()}
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-300 mb-3">
+                <label className="block text-sm font-medium text-gray-700 mb-3">
                   Upload File
                 </label>
-                <div className="relative border-2 border-dashed border-slate-600 rounded-xl p-8 text-center hover:border-blue-500 transition cursor-pointer bg-slate-800/30">
+                <div className="relative border-2 border-dashed border-gray-300 rounded-xl p-10 text-center hover:border-blue-500 transition cursor-pointer bg-gray-50">
                   <input
                     type="file"
                     required
                     onChange={(e) => setUploadedFile(e.target.files[0])}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   />
-                  <FileUp size={36} className="mx-auto text-blue-400 mb-2" />
-                  <p className="text-sm text-gray-300 font-medium">
+                  <FileUp size={36} className="mx-auto text-blue-600 mb-2" />
+                  <p className="text-sm text-gray-700 font-medium">
                     {uploadedFile
                       ? uploadedFile.name
                       : 'Click to upload or drag and drop'}
@@ -644,8 +721,8 @@ export default function AssignmentPortal() {
 
       {/* Grade Submission Modal */}
       {showGradeModal && selectedAssignment && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-8 shadow-2xl">
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-gray-200 rounded-2xl max-w-md w-full p-8 shadow-xl text-gray-900">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-2xl font-bold">Grade Submission</h3>
               <button
@@ -653,30 +730,30 @@ export default function AssignmentPortal() {
                   setShowGradeModal(false);
                   setSelectedSubmission(null);
                 }}
-                className="text-gray-400 hover:text-white transition p-1 hover:bg-slate-700 rounded-lg"
+                className="text-gray-500 hover:text-gray-900 transition p-1 hover:bg-gray-100 rounded-lg"
               >
                 <X size={20} />
               </button>
             </div>
 
             <form onSubmit={handleGradeSubmission} className="space-y-4">
-              <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
-                <p className="text-sm text-gray-300 font-semibold mb-2">
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <p className="text-sm text-gray-700 font-semibold mb-2">
                   {selectedAssignment.title}
                 </p>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-gray-500">
                   Submissions: {selectedAssignment.submissionCount || 0}
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Grade
                 </label>
                 <select
                   name="grade"
                   required
-                  className="w-full px-4 py-3 bg-slate-800/50 border border-slate-600 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition text-white"
+                  className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition text-gray-900"
                 >
                   <option value="">Select a grade</option>
                   <option value="A+">A+ (90-100)</option>
@@ -691,13 +768,13 @@ export default function AssignmentPortal() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Feedback
                 </label>
                 <textarea
                   name="feedback"
                   rows="3"
-                  className="w-full px-4 py-3 bg-slate-800/50 border border-slate-600 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition text-white resize-none placeholder-gray-500"
+                  className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition text-gray-900 resize-none placeholder-gray-400"
                   placeholder="Add feedback for the student"
                 />
               </div>

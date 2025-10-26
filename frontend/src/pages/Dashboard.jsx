@@ -31,14 +31,18 @@ import {
 const StatsCard = ({ card, onClick }) => (
   <div
     onClick={onClick}
-    className={`card glow-on-hover fade-in ${card.color}-gradient`}
-    style={{ '--card-color': card.colorLight, '--card-color-dark': card.colorDark }}
+    className="rounded-2xl p-8 shadow-md hover:shadow-lg transition cursor-pointer text-white min-h-[180px] flex items-center"
+    style={{ background: `linear-gradient(135deg, ${card.colorLight}, ${card.colorDark})` }}
   >
-    <div className="card-icon">{card.icon}</div>
-    <div className="card-text">
-      <p className="text-lg font-semibold text-white">{card.title}</p>
-      <h3 className="text-2xl font-bold text-white shadow-text">{card.value}</h3>
-      <span className="text-sm text-white opacity-80">{card.subtitle}</span>
+    <div className="flex items-center gap-5">
+      <div className="p-3 rounded-xl bg-white/20 backdrop-blur-sm">
+        {card.icon}
+      </div>
+      <div>
+        <p className="text-sm font-medium text-white/80">{card.title}</p>
+        <h3 className="text-3xl font-bold">{card.value}</h3>
+        <span className="text-xs text-white/80">{card.subtitle}</span>
+      </div>
     </div>
   </div>
 );
@@ -67,7 +71,7 @@ const Sidebar = ({ onLogout }) => {
           <Link
             key={index}
             to={link.path}
-            className={`flex items-center p-3 rounded-lg transition-all ${location.pathname === link.path ? 'bg-gray-200' : ''} hover:from-blue-500 hover:to-purple-500 hover:text-white`} // Added colorful hover
+            className={`flex items-center p-3 rounded-lg transition-all ${location.pathname === link.path ? 'bg-gray-200' : 'hover:bg-gray-100 text-gray-800'}`}
           >
             {link.icon} <span className="ml-2">{link.name}</span>
           </Link>
@@ -229,15 +233,13 @@ const { user, logout } = useAuth();
     );
   }
   return (
-    <div className="dashboard-container bg-gradient-to-br from-gray-100 to-gray-200 min-h-screen fade-in">
+    <div className="dashboard-container bg-gray-50 min-h-screen fade-in">
       <Sidebar onLogout={handleLogout} />
 
       <main className="main-content p-6">
         <header className="main-header mb-6">
-          <div className="header-title">
-            <span className="text-3xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
-              Welcome back, {user?.name}!
-            </span>
+          <div className="header-title text-3xl font-bold text-gray-900">
+            Welcome back, {user?.name}!
           </div>
         </header>
 

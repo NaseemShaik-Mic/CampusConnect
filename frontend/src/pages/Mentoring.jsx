@@ -97,29 +97,19 @@ const Mentoring = () => {
 
   return (
     <motion.div
-      className="relative min-h-screen bg-gray-100 px-4 py-10 flex flex-col items-center overflow-hidden"
+      className="min-h-screen bg-gray-50 px-4 py-10 flex flex-col items-center"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      {/* Background */}
-      <div className="absolute inset-0 z-0  pointer-events-none">
-        <Balatro
-          isRotate={false}
-          mouseInteraction={true}
-          pixelFilter={700}
-          className="absolute inset-0"
-        />
-        <div className="absolute inset-0 bg-black/20 backdrop-blur-sm pointer-events-none"></div>
-      </div>
 
       {/* Header */}
-      <div className="relative z-10 w-full max-w-5xl flex justify-between items-center mb-8">
+      <div className="w-full max-w-5xl flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white">
+          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-gray-900">
             Mentoring Sessions
           </h1>
-          <p className="mt-2 text-lg text-white">
+          <p className="mt-2 text-lg text-gray-600">
             Schedule and manage your valuable mentoring opportunities
           </p>
         </div>
@@ -139,7 +129,7 @@ const Mentoring = () => {
       {/* Sessions Grid */}
       <motion.div
         layout
-        className="relative z-10 grid w-full max-w-5xl sm:grid-cols-2 lg:grid-cols-3 gap-7"
+        className="grid w-full max-w-5xl sm:grid-cols-2 lg:grid-cols-3 gap-7 p-0"
       >
         {sessions.length > 0 ? (
           sessions.map((session, index) => {
@@ -150,32 +140,33 @@ const Mentoring = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.04 }}
-                className="bg-white rounded-2xl shadow-md hover:shadow-xl border border-gray-100 p-6 flex flex-col justify-between min-h-[292px]"
+                whileHover={{ y: -5, scale: 1.02 }}
+                className="bg-white rounded-2xl shadow-sm hover:shadow-md border border-gray-200 p-6 flex flex-col justify-between min-h-[320px]"
               >
                 <div>
-                  <div className="flex justify-between items-start mb-3">
-                    <h3 className="text-xl font-semibold text-gray-900">{session.title}</h3>
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${status.color}`}>
+                  <div className="flex justify-between items-start mb-4">
+                    <h3 className="text-2xl font-bold text-gray-900">{session.title}</h3>
+                    <span className={`px-4 py-2 rounded-full text-sm font-semibold bg-blue-100 text-blue-700`}>
                       {status.text}
                     </span>
                   </div>
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">{session.description}</p>
-                  <div className="space-y-2 text-sm text-gray-600">
+                  <p className="text-gray-700 text-base mb-6 leading-relaxed">{session.description}</p>
+                  <div className="space-y-3 text-sm text-gray-600">
                     <div className="flex items-center">
-                      <Calendar className="w-4 h-4 mr-2 text-blue-500" />
+                      <Calendar className="w-5 h-5 mr-3 text-blue-500" />
                       {new Date(session.scheduledDate).toLocaleString()}
                     </div>
                     <div className="flex items-center">
-                      <Clock className="w-4 h-4 mr-2 text-blue-500" />
+                      <Clock className="w-5 h-5 mr-3 text-blue-500" />
                       {session.duration} minutes
                     </div>
                     <div className="flex items-center">
-                      <Users className="w-4 h-4 mr-2 text-blue-500" />
+                      <Users className="w-5 h-5 mr-3 text-blue-500" />
                       Faculty: {session.faculty?.name}
                     </div>
                     {session.location && (
                       <div className="flex items-center">
-                        <MapPin className="w-4 h-4 mr-2 text-blue-500" />
+                        <MapPin className="w-5 h-5 mr-3 text-blue-500" />
                         {session.location}
                       </div>
                     )}
@@ -184,9 +175,9 @@ const Mentoring = () => {
                         href={session.meetingLink}
                         target="_blank"
                         rel="noreferrer"
-                        className="flex items-center text-blue-600 hover:underline"
+                        className="flex items-center text-blue-600 hover:text-blue-700 transition-colors"
                       >
-                        <Video className="w-4 h-4 mr-2" /> Join Meeting
+                        <Video className="w-5 h-5 mr-3" /> Join Meeting
                       </a>
                     )}
                   </div>
@@ -194,14 +185,15 @@ const Mentoring = () => {
                 <div className="mt-6 flex justify-between items-center">
                   {user.role === 'faculty' && (
                     <motion.button
-                      whileHover={{ scale: 1.03 }}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.95 }}
                       onClick={() => handleCancelSession(session._id)}
-                      className="text-sm bg-red-500 text-white px-5 py-2 rounded-xl hover:bg-red-600 transition"
+                      className="text-sm bg-red-500 hover:bg-red-600 text-white px-5 py-2.5 rounded-lg font-semibold shadow-sm transition"
                     >
                       Cancel
                     </motion.button>
                   )}
-                  <span className="text-xs text-gray-500">
+                  <span className="text-sm text-gray-600 font-medium">
                     {session.attendees?.filter((a) => a.attended).length || 0}/{session.students?.length || 0} attended
                   </span>
                 </div>
@@ -210,12 +202,13 @@ const Mentoring = () => {
           })
         ) : (
           <motion.div
-            className="col-span-full text-center text-gray-500 py-14 bg-white rounded-2xl shadow border"
+            className="col-span-full text-center text-gray-600 py-14 bg-white rounded-2xl shadow-sm border border-gray-200"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
           >
-            <Users className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-            No mentoring sessions yet
+            <Users className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+            <p className="text-xl font-semibold text-gray-800 mb-2">No mentoring sessions yet</p>
+            <p className="text-gray-600">Create your first session to get started</p>
           </motion.div>
         )}
       </motion.div>
@@ -224,7 +217,7 @@ const Mentoring = () => {
       <AnimatePresence>
         {showCreateModal && (
           <motion.div
-            className="fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center px-2 py-8 z-50"
+            className="fixed inset-0 bg-black/40 flex items-center justify-center px-2 py-8 z-50"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -234,11 +227,11 @@ const Mentoring = () => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 16 }}
               transition={{ duration: 0.28 }}
-              className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-xl relative"
+              className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8 w-full max-w-xl relative"
             >
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="absolute top-4 right-4 text-gray-400 hover:text-gray-800"
+                className="absolute top-4 right-4 text-gray-500 hover:text-gray-900"
                 aria-label="Close modal"
               >
                 <X className="w-6 h-6" />
@@ -324,16 +317,16 @@ const Mentoring = () => {
                 </div>
                 <div className="flex gap-4 pt-3">
                   <motion.button
-                    whileHover={{ scale: 1.03 }}
+                    whileHover={{ scale: 1.02 }}
                     type="submit"
-                    className="flex-1 bg-gradient-to-r from-indigo-700 to-blue-500 text-white font-semibold rounded-3xl px-7 py-3 shadow-md text-base focus:ring-4 focus:ring-blue-300 transition"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl px-7 py-3 shadow-sm text-base focus:ring-4 focus:ring-blue-200 transition"
                   >
                     Create Session
                   </motion.button>
                   <button
                     type="button"
                     onClick={() => setShowCreateModal(false)}
-                    className="flex-1 bg-gray-100 text-gray-700 rounded-3xl px-7 py-3 shadow focus:bg-gray-200 transition"
+                    className="flex-1 bg-gray-100 text-gray-700 rounded-xl px-7 py-3 shadow-sm hover:bg-gray-200 transition"
                   >
                     Cancel
                   </button>
